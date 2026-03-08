@@ -16,7 +16,7 @@ if (!empty($_SESSION['user_id']) && !empty($_SESSION['role'])) {
             header('Location: /foodwaste/app/manager/dashboard.php');
             exit;
         case 'user':
-            header('Location: /foodwaste/app/user/dashboard.php');
+            header('Location: /foodwaste/app/users/dashboard.php');
             exit;
     }
 }
@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Location: /foodwaste/app/manager/dashboard.php');
                 exit;
             case 'user':
-                header('Location: /foodwaste/app/user/dashboard.php');
+                header('Location: /foodwaste/app/users/dashboard.php');
                 exit;
         }
     } else {
