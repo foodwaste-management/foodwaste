@@ -25,8 +25,8 @@ if (isset($_POST['logout'])) {
     exit;
 }
 
-// ── Fetch latest methane reading from sensor ──────────────────────
-$methane_level  = 0; // default if no sensor data yet
+// Fetch latest methane reading
+$methane_level  = 20;
 $methane_status = 'SAFE';
 $r = $conn->query("SELECT methane_ppm, status FROM methane_monitoring WHERE user_id = $user_id ORDER BY recorded_at DESC LIMIT 1");
 if ($r && $row = $r->fetch_assoc()) {
@@ -34,14 +34,14 @@ if ($r && $row = $r->fetch_assoc()) {
     $methane_status = $row['status'];
 }
 
-// ── Fetch latest gas level from sensor ───────────────────────────
-$gas_left = 0; // default if no sensor data yet
+// Fetch latest gas level
+$gas_left = 65;
 $r2 = $conn->query("SELECT gas_percentage FROM gas_level WHERE user_id = $user_id ORDER BY recorded_at DESC LIMIT 1");
 if ($r2 && $row2 = $r2->fetch_assoc()) {
     $gas_left = $row2['gas_percentage'];
 }
 
-// ── Fetch last 10 gas usage entries for chart ─────────────────────
+// Fetch last 10 gas usage entries for chart
 $chart_labels = [];
 $chart_data   = [];
 $r3 = $conn->query("SELECT flow_rate, recorded_at FROM gas_usage WHERE user_id = $user_id ORDER BY recorded_at DESC LIMIT 10");
@@ -55,8 +55,7 @@ if ($r3) {
     }
 }
 
-// ── DEMO FALLBACK DATA (commented out — uncomment for testing) ────
-/*
+// Fallback demo data
 if (empty($chart_labels)) {
     $now = time();
     for ($i = 9; $i >= 0; $i--) {
@@ -64,18 +63,17 @@ if (empty($chart_labels)) {
         $chart_data[]   = rand(4, 12);
     }
 }
-*/
 
 $chart_labels_json = json_encode($chart_labels);
 $chart_data_json   = json_encode($chart_data);
 
-// ── Methane display values ────────────────────────────────────────
+// Methane display values
 $methane_display = min($methane_level, 100);
 $methane_color   = $methane_level > 50 ? '#dc2626' : ($methane_level > 20 ? '#d97706' : '#16a34a');
 $methane_label   = $methane_level > 50 ? '⚠ Leak Detected' : ($methane_level > 20 ? '⚡ Caution' : '✔ Normal');
 $methane_class   = $methane_level > 50 ? 'status-danger' : ($methane_level > 20 ? 'status-warn' : 'status-safe');
 
-// ── Gas display values ────────────────────────────────────────────
+// Gas display values
 $gas_color = $gas_left < 20 ? '#dc2626' : ($gas_left < 40 ? '#d97706' : '#16a34a');
 $gas_label = $gas_left < 20 ? '⚠ Critical Low' : ($gas_left < 40 ? '⚡ Running Low' : '✔ Sufficient');
 $gas_class = $gas_left < 20 ? 'status-danger' : ($gas_left < 40 ? 'status-warn' : 'status-safe');
@@ -324,16 +322,6 @@ body {
 .status-warn   { color: #d97706; background: #fffbeb; border-color: #fde68a; }
 .status-danger { color: #dc2626; background: #fef2f2; border-color: #fecaca; }
 
-/* ── No data message ── */
-.no-data {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: #a0aec0;
-    font-size: 13px;
-}
-
 /* ── Responsive ── */
 @media (max-width: 680px) {
     .grid-2    { grid-template-columns: 1fr; }
@@ -367,7 +355,7 @@ body {
     <div class="card">
         <div class="card-title">
             Real-Time Gas Usage
-            <span class="live-badge"><span class="live-badge-dot"></span>Live</span>
+            <span class="live-badge"><span class="live-badge-dot"></span>Demo</span>
         </div>
         <div class="chart-meta">
             <div class="meta-item">
@@ -380,11 +368,7 @@ body {
             </div>
         </div>
         <div class="chart-canvas-wrap">
-            <?php if (!empty($chart_labels)): ?>
-                <canvas id="usageChart"></canvas>
-            <?php else: ?>
-                <div class="no-data">No gas usage data from sensors yet.</div>
-            <?php endif; ?>
+            <canvas id="usageChart"></canvas>
         </div>
     </div>
 
@@ -433,7 +417,6 @@ body {
 
     function setGauge(id, pct) {
         const p = document.getElementById(id);
-        if (!p) return;
         p.style.strokeDasharray  = arcLen;
         p.style.strokeDashoffset = arcLen - pct * arcLen;
     }
@@ -442,9 +425,7 @@ body {
     setGauge('gas-fill',     Math.min(Math.max(<?php echo $gas_left?>, 0), 100) / 100);
 })();
 
-// ── Chart (only renders if real sensor data exists) ───────────────
-<?php if (!empty($chart_labels)): ?>
-
+// ── Chart ─────────────────────────────────────────────────────────
 const labels     = <?php echo $chart_labels_json?>;
 const dataPoints = <?php echo $chart_data_json?>;
 
@@ -503,20 +484,15 @@ const chart = new Chart(ctx, {
     }
 });
 
-// Seed latest value from DB data
-const lastVal = dataPoints[dataPoints.length - 1];
-document.getElementById('latest-val').innerHTML = lastVal + '<span> m³/h</span>';
-
-<?php endif; ?>
-
-// ── Live timestamp (always runs) ──────────────────────────────────
+// ── Live updates every 5s ─────────────────────────────────────────
 function nowStr() {
     return new Date().toLocaleTimeString('en-GB', { hour12: false });
 }
-document.getElementById('live-timestamp').textContent = nowStr();
 
-// ── DEMO: simulated live push (commented out — uncomment for testing) ──
-/*
+function updateTimestamp() {
+    document.getElementById('live-timestamp').textContent = nowStr();
+}
+
 function pushLivePoint() {
     const newVal   = +(Math.random() * 6 + 4).toFixed(1);
     const nowLabel = nowStr();
@@ -531,10 +507,15 @@ function pushLivePoint() {
 
     chart.update();
     document.getElementById('latest-val').innerHTML = newVal + '<span> m³/h</span>';
-    document.getElementById('live-timestamp').textContent = nowStr();
+    updateTimestamp();
 }
+
+// Init
+const lastVal = dataPoints[dataPoints.length - 1];
+document.getElementById('latest-val').innerHTML = lastVal + '<span> m³/h</span>';
+updateTimestamp();
+
 setInterval(pushLivePoint, 5000);
-*/
 </script>
 </body>
 </html>
