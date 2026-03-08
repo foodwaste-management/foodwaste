@@ -1,13 +1,13 @@
--- 1. Drop database if it exists (optional)
+-- 1. Drop database if it exists
 DROP DATABASE IF EXISTS foodwaste_db;
 
--- 2. Create the database
+-- 2. Create database
 CREATE DATABASE foodwaste_db CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 
--- 3. Use the database
+-- 3. Use database
 USE foodwaste_db;
 
--- 4. Create Users Table
+-- 4. USERS TABLE (RETAINED)
 CREATE TABLE users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -17,25 +17,44 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 5. Create Activity Logs Table
-CREATE TABLE activity_logs (
+-- 5. GAS USAGE TABLE (Feature #1)
+CREATE TABLE gas_usage (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NULL,
-    email VARCHAR(255) NULL,
-    action VARCHAR(255) NOT NULL,
-    status ENUM('success','failed') NOT NULL,
-    ip_address VARCHAR(50) NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    user_id INT,
+    flow_rate FLOAT,
+    gas_used FLOAT,
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL
 );
 
--- 6. Create System Stats Table
-CREATE TABLE system_stats (
+-- 6. METHANE MONITORING TABLE (Feature #2)
+CREATE TABLE methane_monitoring (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    stat_date DATE NOT NULL,
-    total_food_waste DECIMAL(10,2) DEFAULT 0,  -- in kg
-    organic_compost DECIMAL(10,2) DEFAULT 0,   -- in kg
-    biogas_produced DECIMAL(10,2) DEFAULT 0,   -- in cubic meters
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    user_id INT,
+    methane_ppm FLOAT,
+    status ENUM('SAFE','WARNING','LEAK') DEFAULT 'SAFE',
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL
 );
 
+-- 7. GAS LEVEL TABLE (Feature #3)
+CREATE TABLE gas_level (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    pressure_kpa FLOAT,
+    gas_percentage FLOAT,
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL
+);
+
+-- 8. ACTIVITY LOGS TABLE (MODIFIED)
+CREATE TABLE activity_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NULL,
+    email VARCHAR(255),
+    activity VARCHAR(255) NOT NULL,
+    activity_type ENUM('login','sensor','system','admin'),
+    ip_address VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL
+);
