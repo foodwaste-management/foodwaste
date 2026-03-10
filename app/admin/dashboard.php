@@ -259,15 +259,15 @@ tbody td { padding:10px 16px; color:var(--txt-dark); vertical-align:middle; }
     <nav class="sb-nav">
         <div class="nav-grp">Overview</div>
         <a class="nav-a active" onclick="go('overview',this)">
-            <span class="ico">📊</span><span>Dashboard</span>
+            <span class="ico"></span><span>Dashboard</span>
         </a>
 
         <div class="nav-grp">Administration</div>
         <a class="nav-a" onclick="go('users',this)">
-            <span class="ico">👥</span><span>Users</span>
+            <span class="ico"></span><span>Users</span>
         </a>
         <a class="nav-a" onclick="go('logs',this)">
-            <span class="ico">📋</span><span>Activity Logs</span>
+            <span class="ico"></span><span>Activity Logs</span>
         </a>
     </nav>
 
@@ -280,7 +280,7 @@ tbody td { padding:10px 16px; color:var(--txt-dark); vertical-align:middle; }
             </div>
         </div>
         <a href="/foodwaste/auth/signout.php" class="signout">
-            <span>🚪</span><span>Sign Out</span>
+            <span></span><span>Sign Out</span>
         </a>
     </div>
 </aside>
@@ -302,25 +302,25 @@ tbody td { padding:10px 16px; color:var(--txt-dark); vertical-align:middle; }
 
         <div class="kpi-row">
             <div class="kpi">
-                <div class="kpi-ico">👥</div>
+                <div class="kpi-ico"></div>
                 <div class="kpi-val"><?php echo $totalUsers; ?></div>
                 <div class="kpi-lbl">Registered Users</div>
                 <div class="kpi-sub"><?php echo $failedLogins; ?> failed login<?php echo $failedLogins != 1 ? 's' : ''; ?></div>
             </div>
             <div class="kpi red">
-                <div class="kpi-ico">🚫</div>
+                <div class="kpi-ico"></div>
                 <div class="kpi-val"><?php echo $failedLogins; ?></div>
                 <div class="kpi-lbl">Failed Logins</div>
                 <div class="kpi-sub">Recent attempts</div>
             </div>
             <div class="kpi">
-                <div class="kpi-ico">✅</div>
+                <div class="kpi-ico"></div>
                 <div class="kpi-val"><?php echo $successLogins; ?></div>
                 <div class="kpi-lbl">Successful Logins</div>
                 <div class="kpi-sub">Recent sessions</div>
             </div>
             <div class="kpi">
-                <div class="kpi-ico">📋</div>
+                <div class="kpi-ico"></div>
                 <div class="kpi-val"><?php echo count($logs); ?></div>
                 <div class="kpi-lbl">Log Entries</div>
                 <div class="kpi-sub">Last 20 recorded</div>
@@ -368,13 +368,12 @@ tbody td { padding:10px 16px; color:var(--txt-dark); vertical-align:middle; }
     <div class="sec" id="s-users">
         <div class="kpi-row">
             <div class="kpi">
-                <div class="kpi-ico">👥</div>
+                <div class="kpi-ico"></div>
                 <div class="kpi-val"><?php echo $totalUsers; ?></div>
                 <div class="kpi-lbl">Total Users</div>
             </div>
             <?php foreach ($userRoles as $r): ?>
             <div class="kpi">
-                <div class="kpi-ico"><?php echo $r['role'] === 'admin' ? '🛡️' : ($r['role'] === 'manager' ? '🗂️' : '👤'); ?></div>
                 <div class="kpi-val"><?php echo $r['count']; ?></div>
                 <div class="kpi-lbl"><?php echo ucfirst($r['role']); ?>s</div>
             </div>
@@ -419,17 +418,17 @@ tbody td { padding:10px 16px; color:var(--txt-dark); vertical-align:middle; }
     <div class="sec" id="s-logs">
         <div class="kpi-row">
             <div class="kpi">
-                <div class="kpi-ico">📋</div>
+                <div class="kpi-ico"></div>
                 <div class="kpi-val"><?php echo count($logs); ?></div>
                 <div class="kpi-lbl">Recent Entries</div>
             </div>
             <div class="kpi red">
-                <div class="kpi-ico">🚫</div>
+                <div class="kpi-ico"></div>
                 <div class="kpi-val"><?php echo $failedLogins; ?></div>
                 <div class="kpi-lbl">Failed Logins</div>
             </div>
             <div class="kpi">
-                <div class="kpi-ico">✅</div>
+                <div class="kpi-ico"></div>
                 <div class="kpi-val"><?php echo $successLogins; ?></div>
                 <div class="kpi-lbl">Successful Logins</div>
             </div>
