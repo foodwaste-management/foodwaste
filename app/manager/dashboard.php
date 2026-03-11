@@ -10,6 +10,9 @@ if (empty($_SESSION['role']) || $_SESSION['role'] !== 'manager') {
 $managerEmail = $_SESSION['email'] ?? '';
 $managerId    = (int)($_SESSION['user_id'] ?? 0);
 
+
+
+
 // ─── HANDLE VERIFY / UNVERIFY ────────────────────────────────────────────────
 $actionMsg   = '';
 $actionError = false;
@@ -17,6 +20,9 @@ $actionError = false;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['target_user_id'])) {
     $targetId = (int)$_POST['target_user_id'];
     $action   = $_POST['action'];
+
+
+
 
     // Safety: only allow toggling role='user' accounts
     $check = $pdo->prepare("SELECT user_id, email, verified, role FROM users WHERE user_id = ? AND role = 'user'");
@@ -48,12 +54,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['tar
     }
 }
 
+
+
+
 // ─── QUERIES: scoped to role='user' accounts only ────────────────────────────
 
 $totalUsers      = $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'user'")->fetchColumn();
 $verifiedCount   = $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'user' AND verified = 1")->fetchColumn();
 $unverifiedCount = $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'user' AND verified = 0")->fetchColumn();
 $users           = $pdo->query("SELECT user_id, email, verified, created_at FROM users WHERE role = 'user' ORDER BY created_at DESC")->fetchAll();
+
+
+
 
 // Methane — user accounts only, last 20
 $methane = $pdo->query("
@@ -69,6 +81,9 @@ $methaneStatus = !empty($methane) ? end($methane)['status']      : 'SAFE';
 $statusCounts  = ['SAFE' => 0, 'WARNING' => 0, 'LEAK' => 0];
 foreach ($methane as $m) { if (isset($statusCounts[$m['status']])) $statusCounts[$m['status']]++; }
 
+
+
+
 // Gas level — user accounts only, last 20
 $gasLevel = $pdo->query("
     SELECT g.pressure_kpa, g.gas_percentage, g.recorded_at, u.email
@@ -80,6 +95,9 @@ $gasLevel = $pdo->query("
 $gasLevel       = array_reverse($gasLevel);
 $latestPressure = !empty($gasLevel) ? end($gasLevel)['pressure_kpa']   : 0;
 $latestGasPct   = !empty($gasLevel) ? end($gasLevel)['gas_percentage'] : 0;
+
+
+
 
 // Gas usage — user accounts only, last 20
 $gasUsage = $pdo->query("
@@ -97,6 +115,9 @@ $totalGasUsed = $pdo->query("
     WHERE u.role = 'user'
 ")->fetchColumn();
 
+
+
+
 // Activity logs — user accounts only, last 20
 $logs = $pdo->query("
     SELECT al.*
@@ -107,6 +128,9 @@ $logs = $pdo->query("
 ")->fetchAll();
 $failedLogins  = $pdo->query("SELECT COUNT(*) FROM activity_logs WHERE activity LIKE '%Failed%'")->fetchColumn();
 $successLogins = count(array_filter($logs, fn($l) => $l['activity_type'] === 'login'));
+
+
+
 
 // ─── Chart JSON ──────────────────────────────────────────────────────────────
 $methaneLabels = json_encode(array_map(fn($r) => date('H:i', strtotime($r['recorded_at'])), $methane));
@@ -119,6 +143,9 @@ $gasUsedArr    = json_encode(array_column($gasUsage, 'gas_used'));
 $flowRateArr   = json_encode(array_column($gasUsage, 'flow_rate'));
 $statusJson    = json_encode(array_values($statusCounts));
 ?>
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -138,6 +165,9 @@ $statusJson    = json_encode(array_values($statusCounts));
 }
 html,body{height:100%;background:var(--b-light);color:var(--txt-dark);font-family:'DM Sans',sans-serif;font-size:15px}
 .shell{display:flex;min-height:100vh}
+
+
+
 
 /* ── SIDEBAR ── */
 .sb{width:var(--sb-w);background:var(--m-deep);position:fixed;inset:0 auto 0 0;display:flex;flex-direction:column;z-index:200;box-shadow:3px 0 28px rgba(0,0,0,.22)}
@@ -159,6 +189,9 @@ html,body{height:100%;background:var(--b-light);color:var(--txt-dark);font-famil
 .signout{display:flex;align-items:center;gap:8px;width:100%;padding:8px 14px;border-radius:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);color:rgba(255,255,255,.55);font-size:.82rem;font-family:inherit;text-decoration:none;transition:all .18s;cursor:pointer}
 .signout:hover{background:rgba(184,50,37,.22);border-color:rgba(184,50,37,.4);color:#ffaaaa}
 
+
+
+
 /* ── MAIN ── */
 .main{margin-left:var(--sb-w);flex:1;display:flex;flex-direction:column}
 .topbar{background:var(--b-white);border-bottom:1px solid var(--b-mid);padding:13px 30px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:0 1px 8px rgba(26,48,64,.06)}
@@ -171,6 +204,9 @@ html,body{height:100%;background:var(--b-light);color:var(--txt-dark);font-famil
 .pill.leak{background:#fcd8d8;color:#8a1010}
 .content{padding:26px 30px;flex:1}
 .sec{display:none}.sec.on{display:block}
+
+
+
 
 /* ── KPI ── */
 .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:16px;margin-bottom:22px}
@@ -185,6 +221,9 @@ html,body{height:100%;background:var(--b-light);color:var(--txt-dark);font-famil
 .kpi-lbl{font-size:.76rem;color:var(--txt-soft);font-weight:500;margin-top:4px}
 .kpi-sub{font-size:.70rem;color:var(--txt-muted);margin-top:5px}
 
+
+
+
 /* ── ALERTS / NOTICES ── */
 .alert{display:flex;align-items:center;gap:12px;padding:11px 18px;border-radius:10px;font-size:.84rem;font-weight:500;margin-bottom:20px}
 .alert.danger {background:#fcd8d8;border:1px solid #f5a8a8;color:#6e0e0e}
@@ -192,6 +231,9 @@ html,body{height:100%;background:var(--b-light);color:var(--txt-dark);font-famil
 .alert.success{background:#d4f0de;border:1px solid #9ad4b4;color:#145a2c}
 .alert.error  {background:#fcd8d8;border:1px solid #f5a8a8;color:#6e0e0e}
 .readonly-notice{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--m-ghost);border:1px solid var(--m-pale);border-radius:8px;font-size:.78rem;color:var(--m-mid);margin-bottom:20px}
+
+
+
 
 /* ── CHARTS ── */
 .chart-grid{display:grid;gap:18px;margin-bottom:22px}
@@ -202,6 +244,9 @@ html,body{height:100%;background:var(--b-light);color:var(--txt-dark);font-famil
 .card-sub{font-size:.71rem;color:var(--txt-muted);margin-bottom:14px}
 .ch{position:relative;height:210px}
 .ch.tall{height:250px}
+
+
+
 
 /* ── TABLES ── */
 .tbl-card{background:var(--b-white);border-radius:var(--r);box-shadow:var(--shadow);border:1px solid var(--b-mid);overflow:hidden;margin-bottom:22px}
@@ -217,6 +262,9 @@ tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:var(--b-light)}
 tbody td{padding:10px 16px;color:var(--txt-dark);vertical-align:middle}
 
+
+
+
 /* ── BADGES ── */
 .bdg{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:.67rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
 .b-safe      {background:#d4f0de;color:#145a2c}
@@ -227,6 +275,9 @@ tbody td{padding:10px 16px;color:var(--txt-dark);vertical-align:middle}
 .b-failed    {background:#fcd8d8;color:#8a1010}
 .b-verified  {background:#d4f0de;color:#145a2c}
 .b-unverified{background:#fcd8d8;color:#8a1010}
+
+
+
 
 /* ── VERIFY BUTTONS ── */
 .btn-verify, .btn-unverify {
@@ -239,6 +290,9 @@ tbody td{padding:10px 16px;color:var(--txt-dark);vertical-align:middle}
 .btn-verify:hover  {background:#145a2c;color:#fff}
 .btn-unverify{background:#fde5c2;color:#8a4200}
 .btn-unverify:hover{background:#8a4200;color:#fff}
+
+
+
 
 /* ── CONFIRM MODAL ── */
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(14,31,46,.55);z-index:900;align-items:center;justify-content:center}
@@ -277,6 +331,9 @@ tbody td{padding:10px 16px;color:var(--txt-dark);vertical-align:middle}
 <body>
 <div class="shell">
 
+
+
+
 <!-- ══ SIDEBAR ══ -->
 <aside class="sb">
     <div class="sb-logo">
@@ -284,19 +341,25 @@ tbody td{padding:10px 16px;color:var(--txt-dark);vertical-align:middle}
         <h2>BioGas Monitor</h2>
         <small>Manager View</small>
     </div>
+
+
+
     <nav class="sb-nav">
         <div class="nav-grp">Overview</div>
-        <a class="nav-a active" onclick="go('overview',this)"><span class="ico">📊</span><span>Dashboard</span></a>
+        <a class="nav-a active" onclick="go('overview',this)"><span class="ico"></span><span>Dashboard</span></a>
 
         <div class="nav-grp">Sensor Overview</div>
-        <a class="nav-a" onclick="go('methane',this)"><span class="ico">🔬</span><span>Methane</span></a>
-        <a class="nav-a" onclick="go('gaslevel',this)"><span class="ico">🫧</span><span>Gas Level</span></a>
-        <a class="nav-a" onclick="go('gasusage',this)"><span class="ico">⚡</span><span>Gas Usage</span></a>
+        <a class="nav-a" onclick="go('methane',this)"><span class="ico"></span><span>Methane</span></a>
+        <a class="nav-a" onclick="go('gaslevel',this)"><span class="ico"></span><span>Gas Level</span></a>
+        <a class="nav-a" onclick="go('gasusage',this)"><span class="ico"></span><span>Gas Usage</span></a>
 
         <div class="nav-grp">User Management</div>
-        <a class="nav-a" onclick="go('users',this)"><span class="ico">👥</span><span>Users &amp; Verification</span></a>
-        <a class="nav-a" onclick="go('logs',this)"><span class="ico">📋</span><span>Activity Logs</span></a>
+        <a class="nav-a" onclick="go('users',this)"><span class="ico"></span><span>Users &amp; Verification</span></a>
+        <a class="nav-a" onclick="go('logs',this)"><span class="ico"></span><span>Activity Logs</span></a>
     </nav>
+
+
+
     <div class="sb-foot">
         <div class="sb-user">
             <div class="avatar"><?php echo strtoupper(substr($managerEmail,0,1)); ?></div>
@@ -305,9 +368,12 @@ tbody td{padding:10px 16px;color:var(--txt-dark);vertical-align:middle}
                 <div class="urole">Manager</div>
             </div>
         </div>
-        <a href="/foodwaste/auth/signout.php" class="signout"><span>🚪</span><span>Sign Out</span></a>
+        <a href="/foodwaste/auth/signout.php" class="signout"><span></span><span>Sign Out</span></a>
     </div>
 </aside>
+
+
+
 
 <!-- ══ MAIN ══ -->
 <div class="main">
@@ -318,6 +384,9 @@ tbody td{padding:10px 16px;color:var(--txt-dark);vertical-align:middle}
             <span class="pill <?php echo strtolower($methaneStatus); ?>">CH₄ <?php echo $methaneStatus; ?></span>
         </div>
     </div>
+
+
+    
     <div class="content">
 
     <?php if($actionMsg): ?>
@@ -326,35 +395,38 @@ tbody td{padding:10px 16px;color:var(--txt-dark);vertical-align:middle}
     </div>
     <?php endif; ?>
 
+
+
+
     <!-- ══ OVERVIEW ══ -->
     <div class="sec on" id="s-overview">
         <?php if($methaneStatus==='LEAK'): ?>
-        <div class="alert danger">🚨 <strong>Gas Leak Detected</strong> — A user's methane sensor is reporting a critical level.</div>
+        <div class="alert danger"><strong>Gas Leak Detected</strong> — A user's methane sensor is reporting a critical level.</div>
         <?php elseif($methaneStatus==='WARNING'): ?>
-        <div class="alert warning">⚠️ <strong>Warning:</strong> Elevated methane detected from a user's sensor.</div>
+        <div class="alert warning"><strong>Warning:</strong> Elevated methane detected from a user's sensor.</div>
         <?php endif; ?>
 
         <div class="kpi-row">
             <div class="kpi <?php echo $methaneStatus==='LEAK'?'red':($methaneStatus==='WARNING'?'amber':''); ?>">
-                <div class="kpi-ico">🔬</div>
+                <div class="kpi-ico"></div>
                 <div class="kpi-val"><?php echo number_format($latestMethane,1); ?></div>
                 <div class="kpi-lbl">Latest Methane (ppm)</div>
                 <div class="kpi-sub">Status: <strong><?php echo $methaneStatus; ?></strong></div>
             </div>
             <div class="kpi">
-                <div class="kpi-ico">🫧</div>
+                <div class="kpi-ico"></div>
                 <div class="kpi-val"><?php echo number_format($latestGasPct,1); ?>%</div>
                 <div class="kpi-lbl">Latest Gas Level</div>
                 <div class="kpi-sub"><?php echo number_format($latestPressure,1); ?> kPa pressure</div>
             </div>
             <div class="kpi grn">
-                <div class="kpi-ico">✅</div>
+                <div class="kpi-ico"></div>
                 <div class="kpi-val"><?php echo $verifiedCount; ?></div>
                 <div class="kpi-lbl">Verified Users</div>
                 <div class="kpi-sub"><?php echo $unverifiedCount; ?> awaiting verification</div>
             </div>
             <div class="kpi <?php echo $unverifiedCount>0?'amber':''; ?>">
-                <div class="kpi-ico">👥</div>
+                <div class="kpi-ico"></div>
                 <div class="kpi-val"><?php echo $totalUsers; ?></div>
                 <div class="kpi-lbl">Total Users</div>
                 <div class="kpi-sub">Registered accounts</div>
@@ -363,7 +435,7 @@ tbody td{padding:10px 16px;color:var(--txt-dark);vertical-align:middle}
 
         <?php if($unverifiedCount > 0): ?>
         <div class="alert warning">
-            ⏳ <strong><?php echo $unverifiedCount; ?> account<?php echo $unverifiedCount!=1?'s are':' is'; ?> awaiting verification.</strong>
+            <strong><?php echo $unverifiedCount; ?> account<?php echo $unverifiedCount!=1?'s are':' is'; ?> awaiting verification.</strong>
             <a href="javascript:void(0)" onclick="go('users', document.querySelectorAll('.nav-a')[5])" style="color:inherit;font-weight:700;margin-left:6px;text-decoration:underline">Review now →</a>
         </div>
         <?php endif; ?>
@@ -410,24 +482,27 @@ tbody td{padding:10px 16px;color:var(--txt-dark);vertical-align:middle}
                 </tr>
                 <?php endforeach; ?>
                 <?php if(empty($logs)): ?>
-                <tr><td colspan="5"><div class="empty"><div class="ei">📋</div><p>No activity yet.</p></div></td></tr>
+                <tr><td colspan="5"><div class="empty"><div class="ei"></div><p>No activity yet.</p></div></td></tr>
                 <?php endif; ?>
                 </tbody>
             </table></div>
         </div>
     </div>
 
+
+
+
     <!-- ══ METHANE ══ -->
     <div class="sec" id="s-methane">
-        <div class="readonly-notice">ℹ️ Sensor data is submitted by users from their own devices. This is a read-only view.</div>
+        <div class="readonly-notice">Sensor data is submitted by users from their own devices. This is a read-only view.</div>
         <div class="kpi-row">
             <div class="kpi <?php echo $methaneStatus==='LEAK'?'red':($methaneStatus==='WARNING'?'amber':''); ?>">
-                <div class="kpi-ico">🔬</div><div class="kpi-val"><?php echo number_format($latestMethane,1); ?></div>
+                <div class="kpi-ico"></div><div class="kpi-val"><?php echo number_format($latestMethane,1); ?></div>
                 <div class="kpi-lbl">Latest Reading (ppm)</div>
             </div>
-            <div class="kpi"><div class="kpi-ico">✅</div><div class="kpi-val"><?php echo $statusCounts['SAFE']; ?></div><div class="kpi-lbl">Safe Readings</div></div>
-            <div class="kpi amber"><div class="kpi-ico">⚠️</div><div class="kpi-val"><?php echo $statusCounts['WARNING']; ?></div><div class="kpi-lbl">Warnings</div></div>
-            <div class="kpi red"><div class="kpi-ico">🚨</div><div class="kpi-val"><?php echo $statusCounts['LEAK']; ?></div><div class="kpi-lbl">Leak Events</div></div>
+            <div class="kpi"><div class="kpi-ico"></div><div class="kpi-val"><?php echo $statusCounts['SAFE']; ?></div><div class="kpi-lbl">Safe Readings</div></div>
+            <div class="kpi amber"><div class="kpi-ico"></div><div class="kpi-val"><?php echo $statusCounts['WARNING']; ?></div><div class="kpi-lbl">Warnings</div></div>
+            <div class="kpi red"><div class="kpi-ico"></div><div class="kpi-val"><?php echo $statusCounts['LEAK']; ?></div><div class="kpi-lbl">Leak Events</div></div>
         </div>
         <div class="chart-grid g2">
             <div class="card"><div class="card-title">Methane PPM Over Time</div><div class="card-sub">All user sensors</div><div class="ch tall"><canvas id="ch-meth-det"></canvas></div></div>
@@ -447,23 +522,26 @@ tbody td{padding:10px 16px;color:var(--txt-dark);vertical-align:middle}
                     <td><?php echo $m['recorded_at']; ?></td>
                 </tr>
                 <?php endforeach; ?>
-                <?php if(empty($methane)): ?><tr><td colspan="5"><div class="empty"><div class="ei">🔬</div><p>No methane data yet.</p></div></td></tr><?php endif; ?>
+                <?php if(empty($methane)): ?><tr><td colspan="5"><div class="empty"><div class="ei"></div><p>No methane data yet.</p></div></td></tr><?php endif; ?>
                 </tbody>
             </table></div>
         </div>
     </div>
 
+
+
+
     <!-- ══ GAS LEVEL ══ -->
     <div class="sec" id="s-gaslevel">
-        <div class="readonly-notice">ℹ️ Sensor data is submitted by users from their own devices. This is a read-only view.</div>
+        <div class="readonly-notice">Sensor data is submitted by users from their own devices. This is a read-only view.</div>
         <div class="kpi-row">
-            <div class="kpi"><div class="kpi-ico">📊</div><div class="kpi-val"><?php echo number_format($latestGasPct,1); ?>%</div><div class="kpi-lbl">Latest Gas %</div></div>
-            <div class="kpi"><div class="kpi-ico">🌡️</div><div class="kpi-val"><?php echo number_format($latestPressure,1); ?></div><div class="kpi-lbl">Latest Pressure (kPa)</div></div>
-            <div class="kpi"><div class="kpi-ico">📈</div>
+            <div class="kpi"><div class="kpi-ico"></div><div class="kpi-val"><?php echo number_format($latestGasPct,1); ?>%</div><div class="kpi-lbl">Latest Gas %</div></div>
+            <div class="kpi"><div class="kpi-ico"></div><div class="kpi-val"><?php echo number_format($latestPressure,1); ?></div><div class="kpi-lbl">Latest Pressure (kPa)</div></div>
+            <div class="kpi"><div class="kpi-ico"></div>
                 <div class="kpi-val"><?php echo count($gasLevel)?number_format(array_sum(array_column($gasLevel,'gas_percentage'))/count($gasLevel),1):0; ?>%</div>
                 <div class="kpi-lbl">Avg Gas % (all users)</div>
             </div>
-            <div class="kpi"><div class="kpi-ico">🔢</div><div class="kpi-val"><?php echo count($gasLevel); ?></div><div class="kpi-lbl">Total Readings</div></div>
+            <div class="kpi"><div class="kpi-ico"></div><div class="kpi-val"><?php echo count($gasLevel); ?></div><div class="kpi-lbl">Total Readings</div></div>
         </div>
         <div class="chart-grid g2">
             <div class="card"><div class="card-title">Gas Fill % Over Time</div><div class="card-sub">All user sensors</div><div class="ch tall"><canvas id="ch-gaspct"></canvas></div></div>
@@ -483,23 +561,26 @@ tbody td{padding:10px 16px;color:var(--txt-dark);vertical-align:middle}
                     <td><?php echo $g['recorded_at']; ?></td>
                 </tr>
                 <?php endforeach; ?>
-                <?php if(empty($gasLevel)): ?><tr><td colspan="5"><div class="empty"><div class="ei">🫧</div><p>No gas level data yet.</p></div></td></tr><?php endif; ?>
+                <?php if(empty($gasLevel)): ?><tr><td colspan="5"><div class="empty"><div class="ei"></div><p>No gas level data yet.</p></div></td></tr><?php endif; ?>
                 </tbody>
             </table></div>
         </div>
     </div>
 
+
+
+
     <!-- ══ GAS USAGE ══ -->
     <div class="sec" id="s-gasusage">
-        <div class="readonly-notice">ℹ️ Sensor data is submitted by users from their own devices. This is a read-only view.</div>
+        <div class="readonly-notice">Sensor data is submitted by users from their own devices. This is a read-only view.</div>
         <div class="kpi-row">
-            <div class="kpi"><div class="kpi-ico">⚡</div><div class="kpi-val"><?php echo number_format($totalGasUsed,2); ?></div><div class="kpi-lbl">Total Used (m³)</div></div>
-            <div class="kpi"><div class="kpi-ico">🌊</div><div class="kpi-val"><?php echo count($gasUsage)?number_format(end($gasUsage)['flow_rate'],2):0; ?></div><div class="kpi-lbl">Latest Flow Rate</div></div>
-            <div class="kpi"><div class="kpi-ico">📉</div>
+            <div class="kpi"><div class="kpi-ico"></div><div class="kpi-val"><?php echo number_format($totalGasUsed,2); ?></div><div class="kpi-lbl">Total Used (m³)</div></div>
+            <div class="kpi"><div class="kpi-ico"></div><div class="kpi-val"><?php echo count($gasUsage)?number_format(end($gasUsage)['flow_rate'],2):0; ?></div><div class="kpi-lbl">Latest Flow Rate</div></div>
+            <div class="kpi"><div class="kpi-ico"></div>
                 <div class="kpi-val"><?php echo count($gasUsage)?number_format(array_sum(array_column($gasUsage,'flow_rate'))/count($gasUsage),2):0; ?></div>
                 <div class="kpi-lbl">Avg Flow Rate (all users)</div>
             </div>
-            <div class="kpi"><div class="kpi-ico">🔢</div><div class="kpi-val"><?php echo count($gasUsage); ?></div><div class="kpi-lbl">Total Readings</div></div>
+            <div class="kpi"><div class="kpi-ico"></div><div class="kpi-val"><?php echo count($gasUsage); ?></div><div class="kpi-lbl">Total Readings</div></div>
         </div>
         <div class="chart-grid g2">
             <div class="card"><div class="card-title">Gas Consumed Over Time</div><div class="card-sub">All user sensors</div><div class="ch tall"><canvas id="ch-gasused"></canvas></div></div>
@@ -519,19 +600,22 @@ tbody td{padding:10px 16px;color:var(--txt-dark);vertical-align:middle}
                     <td><?php echo $g['recorded_at']; ?></td>
                 </tr>
                 <?php endforeach; ?>
-                <?php if(empty($gasUsage)): ?><tr><td colspan="5"><div class="empty"><div class="ei">⚡</div><p>No usage data yet.</p></div></td></tr><?php endif; ?>
+                <?php if(empty($gasUsage)): ?><tr><td colspan="5"><div class="empty"><div class="ei"></div><p>No usage data yet.</p></div></td></tr><?php endif; ?>
                 </tbody>
             </table></div>
         </div>
     </div>
 
+
+
+
     <!-- ══ USERS & VERIFICATION ══ -->
     <div class="sec" id="s-users">
         <div class="kpi-row">
-            <div class="kpi"><div class="kpi-ico">👥</div><div class="kpi-val"><?php echo $totalUsers; ?></div><div class="kpi-lbl">Total Users</div></div>
-            <div class="kpi grn"><div class="kpi-ico">✅</div><div class="kpi-val"><?php echo $verifiedCount; ?></div><div class="kpi-lbl">Verified</div><div class="kpi-sub">Cleared to use the system</div></div>
+            <div class="kpi"><div class="kpi-ico"></div><div class="kpi-val"><?php echo $totalUsers; ?></div><div class="kpi-lbl">Total Users</div></div>
+            <div class="kpi grn"><div class="kpi-ico"></div><div class="kpi-val"><?php echo $verifiedCount; ?></div><div class="kpi-lbl">Verified</div><div class="kpi-sub">Cleared to use the system</div></div>
             <div class="kpi <?php echo $unverifiedCount>0?'amber':''; ?>">
-                <div class="kpi-ico">⏳</div><div class="kpi-val"><?php echo $unverifiedCount; ?></div>
+                <div class="kpi-ico"></div><div class="kpi-val"><?php echo $unverifiedCount; ?></div>
                 <div class="kpi-lbl">Awaiting Verification</div>
                 <div class="kpi-sub"><?php echo $unverifiedCount>0?'Action required':'All clear'; ?></div>
             </div>
@@ -571,19 +655,22 @@ tbody td{padding:10px 16px;color:var(--txt-dark);vertical-align:middle}
                 </tr>
                 <?php endforeach; ?>
                 <?php if(empty($users)): ?>
-                <tr><td colspan="5"><div class="empty"><div class="ei">👥</div><p>No users found.</p></div></td></tr>
+                <tr><td colspan="5"><div class="empty"><div class="ei"></div><p>No users found.</p></div></td></tr>
                 <?php endif; ?>
                 </tbody>
             </table></div>
         </div>
     </div>
 
+
+
+
     <!-- ══ ACTIVITY LOGS ══ -->
     <div class="sec" id="s-logs">
         <div class="kpi-row">
-            <div class="kpi"><div class="kpi-ico">📋</div><div class="kpi-val"><?php echo count($logs); ?></div><div class="kpi-lbl">Recent Entries</div></div>
-            <div class="kpi red"><div class="kpi-ico">🚫</div><div class="kpi-val"><?php echo $failedLogins; ?></div><div class="kpi-lbl">Failed Logins</div></div>
-            <div class="kpi"><div class="kpi-ico">✅</div><div class="kpi-val"><?php echo $successLogins; ?></div><div class="kpi-lbl">Successful Logins</div></div>
+            <div class="kpi"><div class="kpi-ico"></div><div class="kpi-val"><?php echo count($logs); ?></div><div class="kpi-lbl">Recent Entries</div></div>
+            <div class="kpi red"><div class="kpi-ico"></div><div class="kpi-val"><?php echo $failedLogins; ?></div><div class="kpi-lbl">Failed Logins</div></div>
+            <div class="kpi"><div class="kpi-ico"></div><div class="kpi-val"><?php echo $successLogins; ?></div><div class="kpi-lbl">Successful Logins</div></div>
         </div>
         <div class="tbl-card">
             <div class="tbl-head"><h3>User Activity Logs</h3><span>Last 20 entries</span></div>
@@ -600,7 +687,7 @@ tbody td{padding:10px 16px;color:var(--txt-dark);vertical-align:middle}
                     <td><?php echo $lg['created_at']; ?></td>
                 </tr>
                 <?php endforeach; ?>
-                <?php if(empty($logs)): ?><tr><td colspan="5"><div class="empty"><div class="ei">📋</div><p>No activity yet.</p></div></td></tr><?php endif; ?>
+                <?php if(empty($logs)): ?><tr><td colspan="5"><div class="empty"><div class="ei"></div><p>No activity yet.</p></div></td></tr><?php endif; ?>
                 </tbody>
             </table></div>
         </div>
@@ -609,6 +696,9 @@ tbody td{padding:10px 16px;color:var(--txt-dark);vertical-align:middle}
     </div><!-- /content -->
 </div><!-- /main -->
 </div><!-- /shell -->
+
+
+
 
 <!-- ══ CONFIRM MODAL ══ -->
 <div class="modal-bg" id="modal">
@@ -627,6 +717,9 @@ tbody td{padding:10px 16px;color:var(--txt-dark);vertical-align:middle}
 </div>
 
 <script>
+
+
+
 // ── Navigation ──────────────────────────────────────────────────────────────
 const TITLES={overview:'Dashboard',methane:'Methane — All Users',gaslevel:'Gas Level — All Users',gasusage:'Gas Usage — All Users',users:'Users & Verification',logs:'Activity Logs'};
 function go(id,el){
@@ -637,13 +730,22 @@ function go(id,el){
     document.getElementById('pg-title').textContent=TITLES[id];
 }
 
+
+
+
 // ── Clock ───────────────────────────────────────────────────────────────────
 function tick(){const n=new Date();document.getElementById('clk').textContent=n.toLocaleDateString('en-PH',{weekday:'short',month:'short',day:'numeric'})+' '+n.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 tick();setInterval(tick,1000);
 
+
+
+
 // ── Auto-dismiss action message ──────────────────────────────────────────────
 const msg=document.getElementById('action-msg');
 if(msg) setTimeout(()=>{msg.style.opacity='0';msg.style.transition='opacity .4s';setTimeout(()=>msg.remove(),400);},4000);
+
+
+
 
 // ── Confirm Modal ────────────────────────────────────────────────────────────
 function openModal(uid, email, action){
@@ -661,6 +763,9 @@ function openModal(uid, email, action){
 }
 function closeModal(){document.getElementById('modal').classList.remove('open');}
 document.getElementById('modal').addEventListener('click', e=>{ if(e.target===e.currentTarget) closeModal(); });
+
+
+
 
 // ── Charts ───────────────────────────────────────────────────────────────────
 Chart.defaults.font.family="'DM Sans',sans-serif";Chart.defaults.font.size=12;Chart.defaults.color='#3a5570';
