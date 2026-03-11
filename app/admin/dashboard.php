@@ -417,40 +417,162 @@ $roleLblJson   = json_encode(array_column($userRoles, 'role'));
 </div><!-- /main -->
 </div><!-- /shell -->
 
+
+
+
 <script>
-const TITLES={overview:'Dashboard',methane:'Methane — All Users',gaslevel:'Gas Level — All Users',gasusage:'Gas Usage — All Users',users:'User Management',logs:'Activity Logs'};
-function go(id,el){
-    document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
-    document.querySelectorAll('.nav-a').forEach(n=>n.classList.remove('active'));
-    document.getElementById('s-'+id).classList.add('on');
+const TITLES = {
+    overview: 'Dashboard',
+    methane: 'Methane — All Users',
+    gaslevel: 'Gas Level — All Users',
+    gasusage: 'Gas Usage — All Users',
+    users: 'User Management',
+    logs: 'Activity Logs'
+};
+
+function go(id, el) {
+    document.querySelectorAll('.sec').forEach(s => s.classList.remove('on'));
+    document.querySelectorAll('.nav-a').forEach(n => n.classList.remove('active'));
+    document.getElementById('s-' + id).classList.add('on');
     el.classList.add('active');
-    document.getElementById('pg-title').textContent=TITLES[id];
+    document.getElementById('pg-title').textContent = TITLES[id];
 }
-function tick(){const n=new Date();document.getElementById('clk').textContent=n.toLocaleDateString('en-PH',{weekday:'short',month:'short',day:'numeric'})+' '+n.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
-tick();setInterval(tick,1000);
-Chart.defaults.font.family="'DM Sans',sans-serif";Chart.defaults.font.size=12;Chart.defaults.color='#637248';
-const C={green:'#6aab35',mid:'#3e6b22',beige:'#b5a48a',safe:'#277a44',warn:'#c96a08',danger:'#b83225'};
-const mLbls=<?php echo $methaneLabels;?>,mPpm=<?php echo $methanePpm;?>;
-const gLbls=<?php echo $gasLvlLabels;?>,gPress=<?php echo $gasPressure;?>,gPct=<?php echo $gasPct;?>;
-const uLbls=<?php echo $gasUseLabels;?>,uUsed=<?php echo $gasUsedArr;?>,uFlow=<?php echo $flowRateArr;?>;
-const sStat=<?php echo $statusJson;?>,rData=<?php echo $roleJson;?>,rLbls=<?php echo $roleLblJson;?>;
-const failCnt=<?php echo (int)$failedLogins;?>,okCnt=<?php echo (int)$successLogins;?>;
-function line(id,labels,datasets){const el=document.getElementById(id);if(!el)return;new Chart(el,{type:'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:datasets.length>1,position:'bottom',labels:{boxWidth:10,padding:14,usePointStyle:true}}},scales:{x:{grid:{color:'rgba(180,200,150,.15)'},ticks:{maxTicksLimit:8,maxRotation:0}},y:{grid:{color:'rgba(180,200,150,.2)'},beginAtZero:false}}}});}
-function donut(id,data,labels,colors){const el=document.getElementById(id);if(!el)return;new Chart(el,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:2,borderColor:'#faf6ee',hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:14,usePointStyle:true}}},cutout:'62%'}});}
-function bar(id,labels,datasets){const el=document.getElementById(id);if(!el)return;new Chart(el,{type:'bar',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(180,200,150,.2)'},beginAtZero:true}}}});}
-const DS=(color,label,data)=>({label,data,borderColor:color,backgroundColor:color+'28',fill:true,tension:0.42,pointBackgroundColor:color,pointRadius:3,borderWidth:2});
-line('ch-meth-ov',mLbls,[DS(C.green,'CH₄ ppm',mPpm)]);
-donut('ch-meth-donut-ov',sStat,['Safe','Warning','Leak'],[C.safe,C.warn,C.danger]);
-line('ch-gaslvl-ov',gLbls,[DS(C.green,'Gas %',gPct),DS(C.beige,'Pressure kPa',gPress)]);
-line('ch-gasuse-ov',uLbls,[DS(C.mid,'Gas Used m³',uUsed)]);
-line('ch-meth-det',mLbls,[DS(C.green,'CH₄ ppm',mPpm)]);
-donut('ch-meth-donut2',sStat,['Safe','Warning','Leak'],[C.safe,C.warn,C.danger]);
-line('ch-gaspct',gLbls,[DS(C.green,'Gas %',gPct)]);
-line('ch-pressure',gLbls,[DS(C.beige,'Pressure kPa',gPress)]);
-line('ch-gasused',uLbls,[DS(C.green,'Gas Used m³',uUsed)]);
-line('ch-flowrate',uLbls,[DS(C.mid,'Flow Rate',uFlow)]);
-donut('ch-roles',rData,rLbls.map(r=>r.charAt(0).toUpperCase()+r.slice(1)),[C.safe,C.warn,C.green]);
-bar('ch-activity',['Successful Logins','Failed Logins'],[{data:[okCnt,failCnt],backgroundColor:[C.safe+'cc',C.danger+'cc'],borderColor:[C.safe,C.danger],borderWidth:2,borderRadius:6}]);
+
+function tick() {
+    const n = new Date();
+    document.getElementById('clk').textContent =
+        n.toLocaleDateString('en-PH', { weekday: 'short', month: 'short', day: 'numeric' }) +
+        ' ' +
+        n.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+tick();
+setInterval(tick, 1000);
+
+Chart.defaults.font.family = "'DM Sans',sans-serif";
+Chart.defaults.font.size = 12;
+Chart.defaults.color = '#637248';
+
+const C = {
+    green: '#6aab35',
+    mid: '#3e6b22',
+    beige: '#b5a48a',
+    safe: '#277a44',
+    warn: '#c96a08',
+    danger: '#b83225'
+};
+
+const mLbls = <?php echo $methaneLabels; ?>,
+      mPpm = <?php echo $methanePpm; ?>;
+
+const gLbls = <?php echo $gasLvlLabels; ?>,
+      gPress = <?php echo $gasPressure; ?>,
+      gPct = <?php echo $gasPct; ?>;
+
+const uLbls = <?php echo $gasUseLabels; ?>,
+      uUsed = <?php echo $gasUsedArr; ?>,
+      uFlow = <?php echo $flowRateArr; ?>;
+
+const sStat = <?php echo $statusJson; ?>,
+      rData = <?php echo $roleJson; ?>,
+      rLbls = <?php echo $roleLblJson; ?>;
+
+const failCnt = <?php echo (int)$failedLogins; ?>,
+      okCnt = <?php echo (int)$successLogins; ?>;
+
+function line(id, labels, datasets) {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    new Chart(el, {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: {
+                    display: datasets.length > 1,
+                    position: 'bottom',
+                    labels: { boxWidth: 10, padding: 14, usePointStyle: true }
+                }
+            },
+            scales: {
+                x: { grid: { color: 'rgba(180,200,150,.15)' }, ticks: { maxTicksLimit: 8, maxRotation: 0 } },
+                y: { grid: { color: 'rgba(180,200,150,.2)' }, beginAtZero: false }
+            }
+        }
+    });
+}
+
+function donut(id, data, labels, colors) {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    new Chart(el, {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#faf6ee', hoverOffset: 6 }] },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom', labels: { boxWidth: 10, padding: 14, usePointStyle: true } }
+            },
+            cutout: '62%'
+        }
+    });
+}
+
+function bar(id, labels, datasets) {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    new Chart(el, {
+        type: 'bar',
+        data: { labels, datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false } },
+                y: { grid: { color: 'rgba(180,200,150,.2)' }, beginAtZero: true }
+            }
+        }
+    });
+}
+
+const DS = (color, label, data) => ({
+    label,
+    data,
+    borderColor: color,
+    backgroundColor: color + '28',
+    fill: true,
+    tension: 0.42,
+    pointBackgroundColor: color,
+    pointRadius: 3,
+    borderWidth: 2
+});
+
+line('ch-meth-ov', mLbls, [DS(C.green, 'CH₄ ppm', mPpm)]);
+donut('ch-meth-donut-ov', sStat, ['Safe', 'Warning', 'Leak'], [C.safe, C.warn, C.danger]);
+line('ch-gaslvl-ov', gLbls, [DS(C.green, 'Gas %', gPct), DS(C.beige, 'Pressure kPa', gPress)]);
+line('ch-gasuse-ov', uLbls, [DS(C.mid, 'Gas Used m³', uUsed)]);
+line('ch-meth-det', mLbls, [DS(C.green, 'CH₄ ppm', mPpm)]);
+donut('ch-meth-donut2', sStat, ['Safe', 'Warning', 'Leak'], [C.safe, C.warn, C.danger]);
+line('ch-gaspct', gLbls, [DS(C.green, 'Gas %', gPct)]);
+line('ch-pressure', gLbls, [DS(C.beige, 'Pressure kPa', gPress)]);
+line('ch-gasused', uLbls, [DS(C.green, 'Gas Used m³', uUsed)]);
+line('ch-flowrate', uLbls, [DS(C.mid, 'Flow Rate', uFlow)]);
+donut('ch-roles', rData, rLbls.map(r => r.charAt(0).toUpperCase() + r.slice(1)), [C.safe, C.warn, C.green]);
+bar('ch-activity', ['Successful Logins', 'Failed Logins'], [{
+    data: [okCnt, failCnt],
+    backgroundColor: [C.safe + 'cc', C.danger + 'cc'],
+    borderColor: [C.safe, C.danger],
+    borderWidth: 2,
+    borderRadius: 6
+}]);
 </script>
 </body>
 </html>
